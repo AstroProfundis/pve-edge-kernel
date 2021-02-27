@@ -80,6 +80,7 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
 --set-str CONFIG_LSM yama,integrity,apparmor \
 -e CONFIG_PAGE_TABLE_ISOLATION \
+-e CONFIG_UKSM \
 --set-str CONFIG_SYSTEM_TRUSTED_KEYS ""
 
 debian/control: $(wildcard debian/*.in)
@@ -115,11 +116,11 @@ binary: install
 
 .config_mark:
 	cd ${KERNEL_SRC}; scripts/config ${PVE_CONFIG_OPTS}
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} olddefconfig
+	${MAKE} -j32 -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} olddefconfig
 	touch $@
 
 .compile_mark: .config_mark
-	${MAKE} -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
+	${MAKE} -j32 -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
 	touch $@
 
 .install_mark: .compile_mark .modules_compile_mark
@@ -129,7 +130,7 @@ binary: install
 	install -m 644 ${KERNEL_SRC}/.config debian/${PVE_KERNEL_PKG}/boot/config-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/System.map debian/${PVE_KERNEL_PKG}/boot/System.map-${KVNAME}
 	install -m 644 ${KERNEL_SRC}/${KERNEL_IMAGE_PATH} debian/${PVE_KERNEL_PKG}/boot/${KERNEL_INSTALL_FILE}-${KVNAME}
-	${MAKE} -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
+	${MAKE} -j32 -C ${KERNEL_SRC} INSTALL_MOD_PATH=${BUILD_DIR}/debian/${PVE_KERNEL_PKG}/ modules_install
 	# install zfs drivers
 	install -d -m 0755 debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
 	install -m 644 $(addprefix ${MODULES}/,zfs.ko zavl.ko znvpair.ko zunicode.ko zcommon.ko icp.ko zlua.ko spl.ko zzstd.ko) debian/${PVE_KERNEL_PKG}/lib/modules/${KVNAME}/zfs
@@ -149,11 +150,11 @@ binary: install
 	touch $@
 
 .tools_compile_mark: .compile_mark
-	${MAKE} -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
+	${MAKE} -j32 -C ${KERNEL_SRC}/tools/perf prefix=/usr HAVE_NO_LIBBFD=1 HAVE_CPLUS_DEMANGLE_SUPPORT=1 NO_LIBPYTHON=1 NO_LIBPERL=1 NO_LIBCRYPTO=1 PYTHON=python2.7
 	echo "checking GPL-2 only perf binary for library linkage with incompatible licenses.."
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibbfd'
 	! ldd ${KERNEL_SRC}/tools/perf/perf | grep -q -E '\blibcrypto'
-	${MAKE} -C ${KERNEL_SRC}/tools/perf man
+	${MAKE} -j32 -C ${KERNEL_SRC}/tools/perf man
 	touch $@
 
 .tools_install_mark: .tools_compile_mark
@@ -206,7 +207,7 @@ binary: install
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
 	mkdir -p ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}
 	cp ${KERNEL_SRC}/.config ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/.config
-	${MAKE} -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 syncconfig prepare scripts
+	${MAKE} -j32 -C ${KERNEL_SRC_COPY} O=${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -j1 syncconfig prepare scripts
 	find ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG} -name \*.o.ur-\* | xargs rm -f
 	rsync --ignore-existing -r -v -a $(addprefix ${BUILD_DIR}/${KERNEL_SRC_COPY}/${PVE_HEADER_PKG}/,arch include kernel scripts tools) ${BUILD_DIR}/debian/${PVE_HEADER_PKG}/usr/src/linux-headers-${KVNAME}/
 	rm -rf ${BUILD_DIR}/${KERNEL_SRC_COPY}
@@ -242,7 +243,7 @@ binary: install
 ${MODULES}/zfs.ko: .compile_mark
 	cd ${MODULES}/${ZFSDIR}; ./autogen.sh
 	cd ${MODULES}/${ZFSDIR}; ./configure --with-config=kernel --with-linux=${BUILD_DIR}/${KERNEL_SRC} --with-linux-obj=${BUILD_DIR}/${KERNEL_SRC}
-	${MAKE} -C ${MODULES}/${ZFSDIR}
+	${MAKE} -j32 -C ${MODULES}/${ZFSDIR}
 	cp ${MODULES}/${ZFSDIR}/module/avl/zavl.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/nvpair/znvpair.ko ${MODULES}/
 	cp ${MODULES}/${ZFSDIR}/module/unicode/zunicode.ko ${MODULES}/
