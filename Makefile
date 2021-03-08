@@ -6,7 +6,7 @@ KERNEL_PATCHLEVEL=8
 # rebuild packages with new KREL and run 'make abiupdate'
 KREL=1
 
-PKGREL=1
+PKGREL=2
 PKGRELLOCAL=1
 PKGRELFULL=${PKGREL}
 
@@ -26,7 +26,7 @@ PVE_BUILD_TYPE ?= generic
 
 ifneq (${PVE_BUILD_TYPE},generic)
 	_ := $(info Using build type: ${PVE_BUILD_TYPE})
-	PKGRELFULL:=${PKGRELFULL}+${PVE_BUILD_TYPE}${PKGRELLOCAL}
+	PKGRELFULL:=${PKGRELFULL}+${PVE_BUILD_TYPE}-${PKGRELLOCAL}
 endif
 
 KVNAME=${KERNEL_VER}${EXTRAVERSION}

@@ -76,12 +76,12 @@ PVE_CONFIG_OPTS= \
 -d CONFIG_UNWINDER_ORC \
 -d CONFIG_UNWINDER_GUESS \
 -e CONFIG_UNWINDER_FRAME_POINTER \
+--set-str CONFIG_SYSTEM_TRUSTED_KEYS ""\
 -d CONFIG_SECURITY_LOCKDOWN_LSM \
 -d CONFIG_SECURITY_LOCKDOWN_LSM_EARLY \
 --set-str CONFIG_LSM yama,integrity,apparmor \
 -e CONFIG_PAGE_TABLE_ISOLATION \
--e CONFIG_UKSM \
---set-str CONFIG_SYSTEM_TRUSTED_KEYS ""
+-e CONFIG_UKSM
 
 debian/control: $(wildcard debian/*.in)
 	sed -e 's/@@KVNAME@@/${KVNAME}/g' < debian/pve-kernel.prerm.in > debian/${PVE_KERNEL_PKG}.prerm
@@ -120,7 +120,7 @@ binary: install
 	touch $@
 
 .compile_mark: .config_mark
-	${MAKE} -j32 -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="${KVNAME} ${PVE_BUILD_TYPE} (${CHANGELOG_DATE})"
+	${MAKE} -j32 -C ${KERNEL_SRC} CC=${PVE_BUILD_CC} KCFLAGS="${PVE_BUILD_CFLAGS}" KBUILD_BUILD_VERSION_TIMESTAMP="PVE ${DEB_VERSION} (${CHANGELOG_DATE})"
 	touch $@
 
 .install_mark: .compile_mark .modules_compile_mark

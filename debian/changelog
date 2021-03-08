@@ -1,3 +1,9 @@
+pve-edge-kernel (5.11.8-2) edge; urgency=medium
+
+  * Adjust rule file accroding to upstream.
+
+ -- Allen Zhong <allen@moe.cat>  Thu, 23 Mar 2021 12:29:52 +0800
+
 pve-edge-kernel (5.11.8-1) edge; urgency=medium
 
   * Update to Linux 5.11.8 based on Ubuntu .
